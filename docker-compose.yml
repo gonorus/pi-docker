@@ -1,0 +1,62 @@
+version: "3.3"
+
+services: 
+  nginx:
+    container_name: nginx
+    image: nginx:alpine
+    ports:
+      - [HOST_PORT]:80
+    volumes:
+      - [HOST_DIR]:/var/www
+      - [HOST_DIR]:/var/log/nginx
+      - ./config/nginx/site.conf:/etc/nginx/conf.d/site.conf
+    links:
+      - php:php
+    networks:
+      web_server_line:
+        ipv4_address: [IP_ADDRESS]
+    restart: always
+
+  php:
+    container_name: php-fpm
+    image: php:7-fpm-alpine
+    volumes:
+      - [HOST_DIR]:/var/www
+    networks:
+      web_server_line:
+        ipv4_address: [IP_ADDRESS]
+    restart: always
+  
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin:latest
+    environment:
+      - PMA_ARBITRARY=1
+    ports:
+      - [HOST_PORT]:80
+    networks: 
+      web_server_line:
+        ipv4_address: [IP_ADDRESS]
+    restart: always
+  
+  db:
+    container_name: db-mysql
+    image: biarms/mysql:5
+    environment:
+      - MYSQL_ROOT_PASSWORD=[ROOT_PASSWORD]
+      - MYSQL_DATABASE=[DB_NAME]
+      - MYSQL_USER=[USER_NAME]
+      - MYSQL_PASSWORD=[USER_PASSWORD]
+    volumes:
+      - [HOST_DIR]:/var/lib/mysql
+    networks:
+      web_server_line:
+        ipv4_address: [IP_ADDRESS]
+    restart: always
+
+networks:
+  web_server_line:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: [IP_SUBNET]/[SUBNET_MASK]
